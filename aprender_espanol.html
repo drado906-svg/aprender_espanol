@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Испански Про">
+    <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Bandera_de_Espa%C3%B1a.svg/192px-Bandera_de_Espa%C3%B1a.svg.png">
+
+    <title>Испански Про (Español Pro)</title>
+    <style>
+        * { -webkit-tap-highlight-color: transparent; touch-action: manipulation; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f0f4f8; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; min-height: 100dvh; }
+        
+        .top-bar { width: 100%; max-width: 450px; background: white; padding: calc(15px + env(safe-area-inset-top)) 20px 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+        .stat { font-size: 18px; font-weight: bold; display: flex; align-items: center; gap: 5px; }
+        .stat-xp { color: #f1c40f; } .stat-lives { color: #e74c3c; display: none; }
+        
+        .main-container { width: 100%; max-width: 450px; padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+        h1 { color: #2c3e50; text-align: center; margin: 10px 0 5px 0; font-size: 24px;}
+        .subtitle { color: #7f8c8d; margin-bottom: 20px; text-align: center; font-size: 14px;}
+
+        .screen { display: none; width: 100%; animation: fadeIn 0.3s; }
+        .active-screen { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .shake { animation: shake 0.5s; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25%, 75% { transform: translateX(-8px); } 50% { transform: translateX(8px); } }
+
+        .header-study { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
+        .back-btn { background: none; border: none; color: #3498db; font-size: 16px; font-weight: bold; cursor: pointer; padding: 0; }
+        
+        .level-header { background-color: #2c3e50; color: white; padding: 10px 15px; border-radius: 8px; margin: 20px 0 10px 0; font-weight: bold; font-size: 14px; text-transform: uppercase; }
+        .lesson-card { background-color: white; border-radius: 12px; padding: 15px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 6px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.2s; border-left: 5px solid #bdc3c7; }
+        .lesson-card:active { transform: scale(0.98); }
+        .lesson-card.completed { border-left-color: #f1c40f; background-color: #fffdf5; }
+        .lesson-card.needs-review { border-left-color: #e74c3c; background-color: #fdedec; } 
+        
+        .lesson-info { width: 75%; }
+        .lesson-info h3 { margin: 0 0 5px 0; color: #34495e; font-size: 18px; }
+        .lesson-info p { margin: 0; color: #7f8c8d; font-size: 13px; }
+        
+        .memory-bar-bg { width: 100%; height: 6px; background: #ecf0f1; border-radius: 3px; margin-top: 8px; display: none; }
+        .memory-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+        
+        .grammar-box { background-color: #e8f4f8; border-left: 5px solid #3498db; padding: 20px; border-radius: 8px; margin-bottom: 25px; color: #2980b9; font-size: 15px; line-height: 1.5; box-shadow: 0 4px 6px rgba(0,0,0,0.05);}
+        .grammar-box h4 { margin: 0 0 10px 0; font-size: 18px; display: flex; align-items: center; gap: 8px;}
+        .action-btns { display: flex; flex-direction: column; gap: 15px; }
+        .btn-main { padding: 15px; font-size: 18px; border: none; border-radius: 12px; cursor: pointer; color: white; font-weight: bold; box-shadow: 0 4px 0px rgba(0,0,0,0.2); transition: 0.1s; text-transform: uppercase; letter-spacing: 1px;}
+        .btn-main:active { transform: translateY(4px); box-shadow: none; }
+        .btn-study { background-color: #3498db; } .btn-quiz { background-color: #2ecc71; } .btn-review { background-color: #e74c3c; }
+
+        .scene { width: 100%; height: 260px; perspective: 600px; margin-bottom: 20px; }
+        .card { width: 100%; height: 100%; position: relative; transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); transform-style: preserve-3d; cursor: pointer; }
+        .card.is-flipped { transform: rotateY(180deg); }
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 20px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); text-align: center; padding: 20px; }
+        .card-front { background-color: white; color: #2c3e50; border: 2px solid #e0e6ed;}
+        .card-back { background-color: #d93025; color: white; transform: rotateY(180deg); border: 2px solid #c0392b;}
+        .lang-text { font-size: 24px; font-weight: bold; margin-top: 15px; line-height: 1.3; } .flag { font-size: 40px; }
+        
+        .controls { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; justify-content: center; width: 100%;}
+        .btn-action { flex: 1; padding: 15px; font-size: 16px; border: none; border-radius: 12px; cursor: pointer; background-color: #ecf0f1; color: #34495e; font-weight: bold; box-shadow: 0 4px 0px #bdc3c7;}
+        .btn-action:active { transform: translateY(4px); box-shadow: none; }
+        .btn-audio { background-color: #3498db; color: white; box-shadow: 0 4px 0px #2980b9; flex: 0.6;}
+        .btn-audio-slow { background-color: #9b59b6; color: white; box-shadow: 0 4px 0px #8e44ad; flex: 0.6;}
+
+        .quiz-question { background-color: white; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .quiz-word { font-size: 26px; font-weight: bold; color: #2c3e50; margin: 15px 0; }
+        .audio-only-btn { background-color: #3498db; color: white; border: none; border-radius: 50%; width: 60px; height: 60px; font-size: 24px; cursor: pointer; box-shadow: 0 4px 0px #2980b9; display: flex; justify-content: center; align-items: center; margin: 10px auto;}
+        
+        .quiz-options { display: flex; flex-direction: column; gap: 12px; }
+        .quiz-option { padding: 18px; font-size: 16px; font-weight: bold; background: white; border: 2px solid #bdc3c7; border-radius: 12px; cursor: pointer; color: #34495e;}
+        .quiz-option:active { background-color: #f8f9fa; transform: scale(0.98); }
+        .quiz-option.correct { background-color: #2ecc71; color: white; border-color: #27ae60; }
+        .quiz-option.wrong { background-color: #e74c3c; color: white; border-color: #c0392b; }
+        
+        .typing-container { display: none; flex-direction: column; gap: 10px; width: 100%; }
+        .typing-input { padding: 15px; font-size: 16px; border: 2px solid #bdc3c7; border-radius: 12px; outline: none; width: 100%; text-align: center; }
+        .typing-input:focus { border-color: #3498db; }
+        
+        .es-keyboard { display: flex; justify-content: center; gap: 5px; flex-wrap: wrap; margin-top: 10px; }
+        .es-key { background: #ecf0f1; border: none; padding: 12px 18px; border-radius: 8px; font-size: 18px; cursor: pointer; font-weight: bold; color: #2c3e50; box-shadow: 0 3px 0px #bdc3c7;}
+        .es-key:active { transform: translateY(3px); box-shadow: none; background: #d5dbdb;}
+
+        .btn-check { background-color: #3498db; color: white; padding: 15px; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 0px #2980b9;}
+        .btn-check:active { transform: translateY(4px); box-shadow: none; }
+        .quiz-next-btn { margin-top: 20px; padding: 15px; width: 100%; background-color: #f1c40f; color: #d35400; font-size: 18px; font-weight: bold; border: none; border-radius: 12px; display: none; cursor: pointer; box-shadow: 0 4px 0px #f39c12;}
+        .quiz-next-btn:active { transform: translateY(4px); box-shadow: none; }
+        
+        .feedback-text { font-size: 18px; font-weight: bold; margin-top: 15px; text-align: center; padding: 10px; border-radius: 8px;}
+        .feedback-text.success { background-color: #e8f8f5; color: #27ae60; border: 1px solid #a3e4d7;}
+        .feedback-text.error { background-color: #fdedec; color: #c0392b; border: 1px solid #f5b7b1;}
+        
+        .progress-bar-container { width: 100%; background: #e0e6ed; height: 12px; border-radius: 6px; margin-bottom: 20px; overflow: hidden;}
+        .progress-bar { height: 100%; background: linear-gradient(90deg, #3498db, #2ecc71); border-radius: 6px; width: 0%; transition: width 0.4s ease-out; }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div class="stat stat-xp">⚡ <span id="xp-counter">0</span> XP</div>
+        <div class="stat stat-lives" id="lives-container"><span id="heart-1">❤️</span><span id="heart-2">❤️</span><span id="heart-3">❤️</span></div>
+    </div>
+
+    <div class="main-container">
+        <!-- ГЛАВНО МЕНЮ (MENÚ PRINCIPAL) -->
+        <div id="roadmap-screen" class="screen active-screen">
+            <h1>🇪🇸 Испански Про 🇧🇬</h1>
+            <p class="subtitle">Пълен курс A1 (Интелигентен преговор)</p>
+            <div id="course-list"></div>
+        </div>
+
+        <!-- ВЪВЕДЕНИЕ В УРОКА (INTRO LECCIÓN) -->
+        <div id="intro-screen" class="screen">
+            <div class="header-study">
+                <button class="back-btn" onclick="showScreen('roadmap-screen')">⬅ Назад</button>
+                <span id="intro-title" style="font-weight: bold; color: #2c3e50;">Урок</span>
+            </div>
+            <div class="grammar-box" id="grammar-content"></div>
+            <div class="action-btns">
+                <button class="btn-main btn-study" id="btn-intro-study" onclick="startStudy()">📖 Фаза 1: Учене</button>
+                <button class="btn-main btn-quiz" id="btn-intro-quiz" onclick="startQuiz()">🏆 Фаза 2: Официален изпит</button>
+            </div>
+        </div>
+
+        <!-- УЧЕНЕ С КАРТИ (ESTUDIO TARJETAS) -->
+        <div id="study-screen" class="screen">
+            <div class="header-study">
+                <button class="back-btn" onclick="showScreen('intro-screen')">⬅ Назад</button>
+                <span style="font-weight: bold; color: #2c3e50;">Запаметяване</span>
+            </div>
+            <div class="progress-bar-container"><div id="study-progress" class="progress-bar"></div></div>
+            <div class="scene">
+                <div class="card" id="flashcard" onclick="flipCard()">
+                    <div class="card-face card-front"><span class="flag">🇧🇬</span><span class="lang-text" id="bulgarian-text"></span></div>
+                    <div class="card-face card-back"><span class="flag">🇪🇸</span><span class="lang-text" id="spanish-text"></span></div>
+                </div>
+            </div>
+            <div class="controls">
+                <button class="btn-action" onclick="prevCard()">⬅️</button>
+                <button class="btn-action btn-audio" onclick="playAudio(1.0)">🔊</button>
+                <button class="btn-action btn-audio-slow" onclick="playAudio(0.5)">🐢</button>
+                <button class="btn-action" onclick="nextCard()">➡️</button>
+            </div>
+        </div>
+
+        <!-- ИЗПИТ (EXAMEN) -->
+        <div id="quiz-screen" class="screen">
+            <div class="header-study">
+                <button class="back-btn" onclick="showScreen('intro-screen')">⬅ Отказване</button>
+                <span style="font-weight: bold; color: #9b59b6;">Оценка</span>
+            </div>
+            <div class="progress-bar-container"><div id="quiz-progress" class="progress-bar"></div></div>
+            <div id="quiz-content">
+                <div class="quiz-question" id="quiz-box">
+                    <div class="flag" id="quiz-flag">🇧🇬</div>
+                    <div style="font-size: 15px; color: #7f8c8d; margin-top:5px;" id="quiz-instruction">Как се казва на испански?</div>
+                    <div class="quiz-word" id="quiz-word"></div>
+                    <button class="audio-only-btn" id="audio-only-btn" style="display:none;" onclick="repeatQuizAudio()">🔊</button>
+                </div>
+
+                <div class="quiz-options" id="quiz-options"></div>
+
+                <div class="typing-container" id="typing-container">
+                    <input type="text" id="typing-input" class="typing-input" placeholder="Докосни, за да пишеш..." autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+                    <div class="es-keyboard">
+                        <button class="es-key" onclick="typeChar('á')">á</button><button class="es-key" onclick="typeChar('é')">é</button>
+                        <button class="es-key" onclick="typeChar('í')">í</button><button class="es-key" onclick="typeChar('ó')">ó</button>
+                        <button class="es-key" onclick="typeChar('ú')">ú</button><button class="es-key" onclick="typeChar('ñ')">ñ</button>
+                        <button class="es-key" onclick="typeChar('¿')">¿</button><button class="es-key" onclick="typeChar('¡')">¡</button>
+                    </div>
+                    <button class="btn-check" onclick="checkTypingAnswer()">Провери</button>
+                </div>
+
+                <div id="feedback-msg" class="feedback-text" style="display:none;"></div>
+                <button class="quiz-next-btn" id="quiz-next-btn" onclick="nextQuizQuestion()">Следващ ➡️</button>
+            </div>
+
+            <!-- РЕЗУЛТАТИ (RESULTADOS) -->
+            <div id="quiz-result" class="quiz-question" style="display:none; margin-top:20px;">
+                <h2 id="result-title">Резултати!</h2>
+                <div style="font-size: 45px; font-weight: bold; color: #2c3e50; margin: 10px 0;" id="result-score">0%</div>
+                <p id="result-message" style="font-size: 18px; margin-bottom: 20px;"></p>
+                <div id="xp-reward" style="font-size: 20px; font-weight: bold; color: #f1c40f; display:none; margin-bottom: 20px;">+50 XP ⚡</div>
+                <button class="btn-main btn-study" style="width:100%;" onclick="showScreen('roadmap-screen')">Продължи</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // EL TEMARIO COMPLETO A1 (Traducido al Búlgaro para la interfaz)
+        const temario = [
+            { id: "l1", nivel: "МОДУЛ 1: ОСНОВИ", titulo: "1. Поздрави и учтивост", desc: "Най-важното за оцеляване.", gramatica: "<h4>💡 Културна бележка</h4>В Испания сме много директни. Често казваме 'Hola' и говорим на 'Ти' в магазините.", contenido: [{ b: "Здравей", e: "¡Hola!" }, { b: "Добро утро", e: "Buenos días" }, { b: "Лека нощ", e: "Buenas noches" }, { b: "Благодаря", e: "Gracias" }, { b: "Моля (като отговор)", e: "De nada" }] },
+            { id: "l2", nivel: "МОДУЛ 1: ОСНОВИ", titulo: "2. Аз съм... (SER)", desc: "Лични местоимения.", gramatica: "<h4>💡 Скритото подлог</h4>В испанския глаголът показва кой говори. Изпускаме 'Аз' (Yo) и казваме само 'Soy'.", contenido: [{ b: "Аз съм", e: "Yo soy" }, { b: "Ти си", e: "Tú eres" }, { b: "Той е", e: "Él es" }, { b: "Ние сме", e: "Nosotros somos" }, { b: "Те са", e: "Ellos son" }] },
+            { id: "l3", nivel: "МОДУЛ 1: ОСНОВИ", titulo: "3. Националност", desc: "Научи се да се представяш.", gramatica: "<h4>💡 Професиите</h4>На испански не казваме 'Soy un estudiante', а директно 'Soy estudiante' (без пълен член).", contenido: [{ b: "Откъде си?", e: "¿De dónde eres?" }, { b: "Аз съм от България", e: "Soy de Bulgaria" }, { b: "Аз съм студент", e: "Soy estudiante" }, { b: "Работя като...", e: "Trabajo como..." }, { b: "Как се казваш?", e: "¿Cómo te llamas?" }] },
+            { id: "l4", nivel: "МОДУЛ 1: ОСНОВИ", titulo: "4. Числа и възраст", desc: "Глаголът TENER (Имам).", gramatica: "<h4>⚠️ Внимание!</h4>За разлика от българския, на испански използваме глагола ИМАМ за годините: 'Tengo 30 años' (Имам 30 години).", contenido: [{ b: "Едно, две, три", e: "Uno, dos, tres" }, { b: "На колко си години?", e: "¿Cuántos años tienes?" }, { b: "Аз съм на 20 години", e: "Tengo 20 años" }, { b: "Имам въпрос", e: "Tengo una pregunta" }, { b: "Нямам време", e: "No tengo tiempo" }] },
+            { id: "l5", nivel: "МОДУЛ 2: ЗАОБИКАЛЯЩА СРЕДА", titulo: "5. Семейство", desc: "Родители и братя.", gramatica: "<h4>💡 Мъжки род за множествено число</h4>'Mis padres' означава едновременно Майка + Баща.", contenido: [{ b: "Майка и баща", e: "Madre y padre" }, { b: "Брат и сестра", e: "Hermano y hermana" }, { b: "Моят приятел", e: "Mi amigo" }, { b: "Твоята къща", e: "Tu casa" }, { b: "Семейство", e: "Familia" }] },
+            { id: "l6", nivel: "МОДУЛ 2: ЗАОБИКАЛЯЩА СРЕДА", titulo: "6. Дни и време", desc: "Организирай седмицата си.", gramatica: "<h4>💡 Малка буква</h4>Дните на седмицата винаги се пишат с малка буква (lunes, martes).", contenido: [{ b: "Понеделник, Вторник", e: "Lunes, martes" }, { b: "Днес е сряда", e: "Hoy es miércoles" }, { b: "Утре", e: "Mañana" }, { b: "Уикенд", e: "Fin de semana" }, { b: "Часът е два", e: "Son las dos" }] },
+            { id: "l7", nivel: "МОДУЛ 2: ЗАОБИКАЛЯЩА СРЕДА", titulo: "7. Физическо описание", desc: "Прилагателни имена.", gramatica: "<h4>💡 Съгласуване</h4>'Él es alto' (за мъж - завършва на О), но 'Ella es alta' (за жена - завършва на А).", contenido: [{ b: "Той е висок", e: "Él es alto" }, { b: "Тя е ниска", e: "Ella es baja" }, { b: "Красив", e: "Guapo" }, { b: "Умен", e: "Inteligente" }, { b: "Много добре", e: "Muy bien" }] },
+            { id: "l8", nivel: "МОДУЛ 2: ЗАОБИКАЛЯЩА СРЕДА", titulo: "8. Цветове и дрехи", desc: "Пазаруване.", gramatica: "<h4>💡 Прилагателното е след съществителното</h4>Казва се 'Camiseta blanca' (бяла тениска), а не обратното.", contenido: [{ b: "Бяло и Черно", e: "Blanco y negro" }, { b: "Червено и Синьо", e: "Rojo y azul" }, { b: "Тениска", e: "Camiseta" }, { b: "Панталони", e: "Pantalones" }, { b: "Обувки", e: "Zapatos" }] },
+            { id: "l9", nivel: "МОДУЛ 3: ДЕЙСТВИЯ", titulo: "9. Глаголи (-AR)", desc: "Говоря, работя.", gramatica: "<h4>💡 Най-голямата група</h4>Повечето глаголи в испанския завършват на -AR.", contenido: [{ b: "Аз говоря испански", e: "Hablo español" }, { b: "Ти работиш", e: "Trabajas" }, { b: "Ние учим", e: "Estudiamos" }, { b: "Тя слуша музика", e: "Ella escucha música" }, { b: "Аз купувам", e: "Compro" }] },
+            { id: "l10", nivel: "МОДУЛ 3: ДЕЙСТВИЯ", titulo: "10. Глаголи (-ER, -IR)", desc: "Ям, живея.", gramatica: "<h4>💡 Много сходни</h4>Окончанията -ER и -IR са почти еднакви.", contenido: [{ b: "Аз ям", e: "Como" }, { b: "Ти пиеш вода", e: "Bebes agua" }, { b: "Ние живеем в...", e: "Vivimos en..." }, { b: "Аз чета книга", e: "Leo un libro" }, { b: "Аз разбирам", e: "Comprendo" }] },
+            { id: "l11", nivel: "МОДУЛ 3: ДЕЙСТВИЯ", titulo: "11. ESTAR и Емоции", desc: "Ser срещу Estar.", gramatica: "<h4>⚠️ SER срещу ESTAR</h4>ESTAR се използва за временни местоположения или емоции (Днес съм щастлив).", contenido: [{ b: "Как си?", e: "¿Cómo estás?" }, { b: "Добре съм", e: "Estoy bien" }, { b: "Аз съм уморен", e: "Estoy cansado" }, { b: "Аз съм щастлив", e: "Estoy feliz" }, { b: "Къде си?", e: "¿Dónde estás?" }] },
+            { id: "l12", nivel: "МОДУЛ 3: ДЕЙСТВИЯ", titulo: "12. Моята рутина", desc: "Възвратни глаголи.", gramatica: "<h4>💡 Възвратни глаголи</h4>Използваме 'Me' (се), когато действието е насочено към нас самите (Събуждам се).", contenido: [{ b: "Събуждам се", e: "Me despierto" }, { b: "Ставам", e: "Me levanto" }, { b: "Вземам душ", e: "Me ducho" }, { b: "Отивам на работа", e: "Voy al trabajo" }, { b: "Спя", e: "Duermo" }] },
+            { id: "l13", nivel: "МОДУЛ 4: ОЦЕЛЯВАНЕ", titulo: "13. В ресторанта", desc: "Поръчай храна.", gramatica: "<h4>💡 Как да поръчаш</h4>По-учтиво е да използваш 'Quería...' (Бих искал...), отколкото 'Искам'.", contenido: [{ b: "Маса за двама", e: "Una mesa para dos" }, { b: "Бих искал...", e: "Quería..." }, { b: "Сметката, моля", e: "La cuenta, por favor" }, { b: "Много е вкусно!", e: "¡Está muy rico!" }, { b: "Още малко хляб", e: "Un poco más de pan" }] },
+            { id: "l14", nivel: "МОДУЛ 4: ОЦЕЛЯВАНЕ", titulo: "14. Храни", desc: "Храна и напитки.", gramatica: "<h4>💡 Трикът с водата</h4>'Agua' е от женски род, но казваме 'El agua', за да звучи по-добре.", contenido: [{ b: "Месо и Риба", e: "Carne y pescado" }, { b: "Плодове и Зеленчуци", e: "Frutas y verduras" }, { b: "Кафе с мляко", e: "Café con leche" }, { b: "Захар", e: "Azúcar" }, { b: "Сол", e: "Sal" }] },
+            { id: "l15", nivel: "МОДУЛ 4: ОЦЕЛЯВАНЕ", titulo: "15. Градът и HAY", desc: "Това, което съществува.", gramatica: "<h4>💡 HAY (Има)</h4>'Hay' означава 'Има' (съществува нещо някъде).", contenido: [{ b: "Има ли аптека тук?", e: "¿Hay una farmacia aquí?" }, { b: "Болница", e: "Hospital" }, { b: "Училище", e: "Escuela" }, { b: "Парк", e: "Parque" }, { b: "Има много хора", e: "Hay mucha gente" }] },
+            { id: "l16", nivel: "МОДУЛ 4: ОЦЕЛЯВАНЕ", titulo: "16. Посоки", desc: "Как да стигна до...?", gramatica: "<h4>💡 Направо</h4>'Todo recto' означава да продължиш напред, без да завиваш.", contenido: [{ b: "Къде е метрото?", e: "¿Dónde está el metro?" }, { b: "Надясно", e: "A la derecha" }, { b: "Наляво", e: "A la izquierda" }, { b: "Направо", e: "Todo recto" }, { b: "Близо ли е?", e: "¿Está cerca?" }] },
+            { id: "l17", nivel: "МОДУЛ 5: КОМУНИКАЦИЯ", titulo: "17. Глаголът GUSTAR", desc: "Предпочитания.", gramatica: "<h4>⚠️ Наобратно!</h4>Не казваме 'Аз харесвам', а 'Me gusta' (На мен ми харесва).", contenido: [{ b: "Харесва ми", e: "Me gusta" }, { b: "Не ми харесва", e: "No me gusta" }, { b: "Обичам да пътувам", e: "Me gusta viajar" }, { b: "Харесват ми тези обувки", e: "Me gustan estos zapatos" }, { b: "Обичам те", e: "Te quiero" }] },
+            { id: "l18", nivel: "МОДУЛ 5: КОМУНИКАЦИЯ", titulo: "18. Въпроси", desc: "Ключови думи.", gramatica: "<h4>💡 Ударения</h4>Във въпросителните думи (Qué, Quién) винаги се поставя графично ударение.", contenido: [{ b: "Какво?", e: "¿Qué?" }, { b: "Кой?", e: "¿Quién?" }, { b: "Кога?", e: "¿Cuándo?" }, { b: "Къде?", e: "¿Dónde?" }, { b: "Защо?", e: "¿Por qué?" }] },
+            { id: "l19", nivel: "МОДУЛ 5: КОМУНИКАЦИЯ", titulo: "19. Пазаруване", desc: "Цени и плащания.", gramatica: "<h4>💡 Символът €</h4>Символът за евро се поставя след числото (15€).", contenido: [{ b: "Колко струва?", e: "¿Cuánto cuesta?" }, { b: "Скъпо", e: "Caro" }, { b: "Евтино", e: "Barato" }, { b: "Плащам в брой", e: "Pago en efectivo" }, { b: "Плащам с карта", e: "Pago con tarjeta" }] },
+            { id: "l20", nivel: "МОДУЛ 5: КОМУНИКАЦИЯ", titulo: "20. Близко бъдеще", desc: "Voy a + действие.", gramatica: "<h4>💡 Трикът за бъдеще време</h4>Използвай 'Voy a' + действието (Voy a comer - Ще ям).", contenido: [{ b: "Ще пътувам", e: "Voy a viajar" }, { b: "Ще ям", e: "Voy a comer" }, { b: "Какво ще правиш?", e: "¿Qué vas a hacer?" }, { b: "Ще уча испански", e: "Voy a estudiar español" }, { b: "До скоро!", e: "¡Hasta pronto!" }] }
+        ];
+
+        let appData = JSON.parse(localStorage.getItem('espanol_pro_v9')) || { progreso: {}, xp: 0, last_played: {}, mistakes: {} };
+        document.getElementById('xp-counter').innerText = appData.xp;
+        
+        const DEGRADATION_TIME_MS = 3 * 24 * 60 * 60 * 1000;
+
+        let currentLesson = null, currentIndex = 0, quizScore = 0, currentQuizMode = "choice", allWrongOptions = [], vidas = 3;
+
+        function saveGame() { localStorage.setItem('espanol_pro_v9', JSON.stringify(appData)); document.getElementById('xp-counter').innerText = appData.xp; }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+            document.getElementById(screenId).classList.add('active-screen');
+            document.getElementById('lives-container').style.display = (screenId === 'quiz-screen') ? 'flex' : 'none';
+            if(screenId === 'roadmap-screen') renderRoadmap();
+        }
+
+        function getMemoryStrength(lessonId) {
+            if (!appData.progreso[lessonId]) return 0; 
+            if (!appData.last_played[lessonId]) return 100; 
+            const now = new Date().getTime();
+            const timePassed = now - appData.last_played[lessonId];
+            let strength = 100 - ((timePassed - DEGRADATION_TIME_MS) / (4 * 24 * 60 * 60 * 1000)) * 100;
+            if (timePassed < DEGRADATION_TIME_MS) strength = 100;
+            if (strength < 0) strength = 0;
+            if (strength > 100) strength = 100;
+            return strength;
+        }
+
+        function renderRoadmap() {
+            const container = document.getElementById('course-list');
+            container.innerHTML = ""; let currentNivel = "";
+            
+            temario.forEach((leccion) => {
+                if (leccion.nivel !== currentNivel) {
+                    currentNivel = leccion.nivel;
+                    const header = document.createElement('div'); header.className = 'level-header'; header.innerText = currentNivel; container.appendChild(header);
+                }
+                
+                const isCompletada = appData.progreso[leccion.id] === true;
+                const memoryStrength = getMemoryStrength(leccion.id);
+                const needsReview = isCompletada && memoryStrength < 50; 
+                
+                let cardClass = 'lesson-card';
+                if (needsReview) cardClass += ' needs-review';
+                else if (isCompletada) cardClass += ' completed';
+
+                const card = document.createElement('div'); card.className = cardClass;
+                card.onclick = () => openIntro(leccion, memoryStrength, needsReview);
+                
+                let icono = '📖';
+                if (needsReview) icono = '⚠️';
+                else if (isCompletada) icono = '🏆';
+                
+                let memoryBarHTML = '';
+                if (isCompletada) {
+                    let barColor = '#2ecc71';
+                    if (memoryStrength < 50) barColor = '#e74c3c';
+                    else if (memoryStrength < 80) barColor = '#f39c12';
+                    memoryBarHTML = `<div class="memory-bar-bg" style="display:block;"><div class="memory-bar-fill" style="width:${memoryStrength}%; background:${barColor};"></div></div>`;
+                }
+
+                card.innerHTML = `<div class="lesson-info"><h3>${leccion.titulo}</h3><p>${leccion.desc}</p>${memoryBarHTML}</div><div style="font-size: 26px;">${icono}</div>`;
+                container.appendChild(card);
+            });
+        }
+
+        function openIntro(leccion, memoryStrength, needsReview) {
+            currentLesson = leccion; 
+            document.getElementById('intro-title').innerText = "Урок " + leccion.id.replace('l', ''); 
+            document.getElementById('grammar-content').innerHTML = leccion.gramatica;
+            
+            const btnQuiz = document.getElementById('btn-intro-quiz');
+            if (needsReview) {
+                btnQuiz.className = "btn-main btn-review";
+                btnQuiz.innerHTML = "⚠️ Фаза 2: Преговор на урока";
+            } else {
+                btnQuiz.className = "btn-main btn-quiz";
+                btnQuiz.innerHTML = "🏆 Фаза 2: Официален изпит";
+            }
+
+            allWrongOptions = []; temario.forEach(l => { l.contenido.forEach(c => { if(!leccion.contenido.find(x => x.e === c.e)) allWrongOptions.push(c.e); }) });
+            showScreen('intro-screen');
+        }
+
+        function startStudy() { currentIndex = 0; showScreen('study-screen'); loadStudyCard(); }
+        function loadStudyCard() {
+            document.getElementById('flashcard').classList.remove("is-flipped");
+            setTimeout(() => {
+                document.getElementById('bulgarian-text').innerText = currentLesson.contenido[currentIndex].b;
+                document.getElementById('spanish-text').innerText = currentLesson.contenido[currentIndex].e;
+                document.getElementById('study-progress').style.width = `${((currentIndex + 1) / currentLesson.contenido.length) * 100}%`;
+            }, 150);
+        }
+        function flipCard() { document.getElementById('flashcard').classList.toggle("is-flipped"); }
+        function nextCard() { currentIndex = (currentIndex + 1) % currentLesson.contenido.length; loadStudyCard(); }
+        function prevCard() { currentIndex = (currentIndex - 1 + currentLesson.contenido.length) % currentLesson.contenido.length; loadStudyCard(); }
+        function playAudio(speed) { let s = new SpeechSynthesisUtterance(currentLesson.contenido[currentIndex].e); s.lang = "es-ES"; s.rate = speed; window.speechSynthesis.speak(s); }
+        function playAudioQuiz(text) { let s = new SpeechSynthesisUtterance(text); s.lang = "es-ES"; window.speechSynthesis.speak(s); }
+
+        function updateHeartsUI() {
+            for(let i=1; i<=3; i++) {
+                document.getElementById(`heart-${i}`).style.opacity = vidas >= i ? "1" : "0.2";
+                document.getElementById(`heart-${i}`).innerText = vidas >= i ? "❤️" : "🖤";
+            }
+        }
+
+        function startQuiz() {
+            currentIndex = 0; quizScore = 0; vidas = 3; updateHeartsUI();
+            
+            let quizList = [...currentLesson.contenido];
+            currentLesson.quizData = quizList.sort(() => Math.random() - 0.5);
+            
+            document.getElementById('quiz-content').style.display = "block"; document.getElementById('quiz-result').style.display = "none";
+            showScreen('quiz-screen'); loadQuizQuestion();
+        }
+
+        function normalizeText(text) { return text.toLowerCase().replace(/[.,¡!¿?]/g, "").trim(); }
+        function repeatQuizAudio() { playAudioQuiz(currentLesson.quizData[currentIndex].e); }
+
+        function loadQuizQuestion() {
+            document.getElementById('quiz-next-btn').style.display = "none"; document.getElementById('feedback-msg').style.display = "none";
+            document.getElementById('quiz-progress').style.width = `${(currentIndex / currentLesson.quizData.length) * 100}%`;
+            
+            const currentItem = currentLesson.quizData[currentIndex];
+            const quizWordEl = document.getElementById('quiz-word');
+            const quizFlagEl = document.getElementById('quiz-flag');
+            const audioBtnEl = document.getElementById('audio-only-btn');
+            
+            const randomizer = Math.random();
+            if (randomizer < 0.4) currentQuizMode = "choice";
+            else if (randomizer < 0.8) currentQuizMode = "typing";
+            else currentQuizMode = "audio"; 
+
+            if (currentQuizMode === "choice") {
+                document.getElementById('quiz-instruction').innerText = "Избери правилния превод:";
+                quizFlagEl.innerText = "🇧🇬"; quizWordEl.innerText = currentItem.b; quizWordEl.style.display = "block"; audioBtnEl.style.display = "none";
+                document.getElementById('typing-container').style.display = "none"; document.getElementById('quiz-options').style.display = "flex";
+                
+                let options = [currentItem.e];
+                const distractors = [...allWrongOptions].sort(() => Math.random() - 0.5).slice(0, 2);
+                options = options.concat(distractors).sort(() => Math.random() - 0.5);
+                const container = document.getElementById('quiz-options'); container.innerHTML = ""; 
+                options.forEach(opt => {
+                    const btn = document.createElement("button"); btn.className = "quiz-option"; btn.innerText = opt;
+                    btn.onclick = () => checkChoiceAnswer(btn, opt, currentItem.e); container.appendChild(btn);
+                });
+            } 
+            else if (currentQuizMode === "typing") {
+                document.getElementById('quiz-instruction').innerText = "Напиши превода (внимавай за ударенията):";
+                quizFlagEl.innerText = "🇧🇬"; quizWordEl.innerText = currentItem.b; quizWordEl.style.display = "block"; audioBtnEl.style.display = "none";
+                document.getElementById('quiz-options').style.display = "none"; document.getElementById('typing-container').style.display = "flex";
+                setupTypingInput();
+            }
+            else if (currentQuizMode === "audio") {
+                document.getElementById('quiz-instruction').innerText = "🎧 Чуй и напиши това, което чуваш на испански:";
+                quizFlagEl.innerText = "🇪🇸"; quizWordEl.style.display = "none"; audioBtnEl.style.display = "flex";
+                document.getElementById('quiz-options').style.display = "none"; document.getElementById('typing-container').style.display = "flex";
+                setupTypingInput();
+                setTimeout(repeatQuizAudio, 500);
+            }
+        }
+        
+        function setupTypingInput() {
+            const inputEl = document.getElementById('typing-input');
+            inputEl.value = ""; inputEl.disabled = false;
+            inputEl.onkeyup = function(e) { if(e.key === 'Enter') { inputEl.blur(); checkTypingAnswer(); } };
+        }
+
+        function triggerShake() { const box = document.getElementById('quiz-box'); box.classList.remove("shake"); void box.offsetWidth; box.classList.add("shake"); }
+
+        function checkChoiceAnswer(btn, selected, correct) {
+            document.querySelectorAll('.quiz-option').forEach(b => b.disabled = true);
+            handleAnswerResult(selected === correct, correct, btn);
+        }
+
+        function typeChar(char) { const input = document.getElementById('typing-input'); input.value += char; }
+
+        function checkTypingAnswer() {
+            const inputEl = document.getElementById('typing-input');
+            const userAnswer = normalizeText(inputEl.value);
+            const correctAnswer = normalizeText(currentLesson.quizData[currentIndex].e);
+            if(userAnswer === "") return;
+            inputEl.disabled = true; handleAnswerResult(userAnswer === correctAnswer, currentLesson.quizData[currentIndex].e, null);
+        }
+
+        function handleAnswerResult(isCorrect, correctAnswer, clickedBtn) {
+            const msgEl = document.getElementById('feedback-msg'); msgEl.style.display = "block";
+            
+            if (!appData.mistakes[currentLesson.id]) appData.mistakes[currentLesson.id] = [];
+            
+            if (isCorrect) {
+                if(clickedBtn) clickedBtn.classList.add("correct");
+                msgEl.innerText = "Отлично! ✅"; msgEl.className = "feedback-text success";
+                quizScore++; playAudioQuiz(correctAnswer);
+                
+                appData.mistakes[currentLesson.id] = appData.mistakes[currentLesson.id].filter(word => word !== correctAnswer);
+                
+                document.getElementById('quiz-next-btn').style.display = "block";
+            } else {
+                if(clickedBtn) clickedBtn.classList.add("wrong");
+                document.querySelectorAll('.quiz-option').forEach(b => { if (b.innerText === correctAnswer) b.classList.add("correct"); });
+                
+                if (!appData.mistakes[currentLesson.id].includes(correctAnswer)) appData.mistakes[currentLesson.id].push(correctAnswer);
+                
+                msgEl.innerHTML = `Грешно ❌<br>Трябваше да е: <b>${correctAnswer}</b>`; msgEl.className = "feedback-text error";
+                triggerShake(); vidas--; updateHeartsUI();
+                if (vidas === 0) { setTimeout(gameOver, 1500); } else { document.getElementById('quiz-next-btn').style.display = "block"; }
+            }
+        }
+
+        function nextQuizQuestion() { if (currentIndex < currentLesson.quizData.length - 1) { currentIndex++; loadQuizQuestion(); } else { finishQuiz(); } }
+
+        function gameOver() {
+            document.getElementById('quiz-content').style.display = "none"; document.getElementById('quiz-result').style.display = "block";
+            document.getElementById('result-title').innerText = "Остана без животи! 💔"; document.getElementById('result-title').style.color = "#e74c3c";
+            document.getElementById('result-score').innerText = "Край на играта";
+            document.getElementById('result-message').innerText = "Направи 3 грешки. Преговори теорията и опитай отново."; document.getElementById('result-message').style.color = "#e74c3c";
+            document.getElementById('xp-reward').style.display = "none";
+            saveGame();
+        }
+
+        function finishQuiz() {
+            document.getElementById('quiz-progress').style.width = "100%"; document.getElementById('quiz-content').style.display = "none"; document.getElementById('quiz-result').style.display = "block";
+            document.getElementById('result-title').innerText = "Мисията изпълнена! 🎯"; document.getElementById('result-title').style.color = "#2c3e50";
+            const percentage = Math.round((quizScore / currentLesson.quizData.length) * 100); document.getElementById('result-score').innerText = `${percentage}%`;
+            const msgEl = document.getElementById('result-message'); const xpRewardEl = document.getElementById('xp-reward');
+            
+            if (percentage >= 80) {
+                msgEl.innerText = "Поздравления! Паметта е възстановена на 100%."; msgEl.style.color = "#2ecc71";
+                
+                if (!appData.progreso[currentLesson.id]) { appData.xp += 50; xpRewardEl.style.display = "block"; } 
+                else if (getMemoryStrength(currentLesson.id) < 50) { appData.xp += 20; xpRewardEl.innerHTML = "+20 XP (Преговор) ⚡"; xpRewardEl.style.display = "block"; } 
+                else { xpRewardEl.style.display = "none"; }
+                
+                appData.progreso[currentLesson.id] = true;
+                appData.last_played[currentLesson.id] = new Date().getTime(); 
+                saveGame();
+            } else { 
+                msgEl.innerText = "Не премина 80%. Прегледай грешките си!"; msgEl.style.color = "#e74c3c"; xpRewardEl.style.display = "none"; 
+                saveGame();
+            }
+        }
+
+        renderRoadmap();
+    </script>
+</body>
+</html>
